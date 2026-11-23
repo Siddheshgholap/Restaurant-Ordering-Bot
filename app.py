@@ -2,14 +2,13 @@
 import os
 import csv
 import json
-import html
 import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
 
-# ==================================================
+# =====================================================
 # PAGE CONFIGURATION
-# ==================================================
+# =====================================================
 
 st.set_page_config(
     page_title="The Urban Spoon",
@@ -17,58 +16,35 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==================================================
+# =====================================================
 # CUSTOM CSS
-# ==================================================
+# =====================================================
 
 st.markdown("""
 <style>
-
-/* MAIN BACKGROUND */
-
-.stApp,
-[data-testid="stAppViewContainer"] {
+.stApp {
     background-color: #F8F7F4;
 }
-
-/* FORCE DARK TEXT THROUGHOUT MAIN CONTENT */
-
-[data-testid="stAppViewContainer"] .main [data-testid="stMarkdownContainer"] p,
-[data-testid="stAppViewContainer"] .main [data-testid="stMarkdownContainer"] h1,
-[data-testid="stAppViewContainer"] .main [data-testid="stMarkdownContainer"] h2,
-[data-testid="stAppViewContainer"] .main [data-testid="stMarkdownContainer"] h3,
-[data-testid="stAppViewContainer"] .main [data-testid="stMarkdownContainer"] h4,
-[data-testid="stAppViewContainer"] .main [data-testid="stMarkdownContainer"] li,
-[data-testid="stAppViewContainer"] .main label,
-[data-testid="stAppViewContainer"] .main [data-testid="stWidgetLabel"] {
-    color: #292929 !important;
-}
-
-/* PAGE WIDTH */
-
-.main .block-container {
-    max-width: 1200px;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
-}
-
-/* SIDEBAR */
 
 [data-testid="stSidebar"] {
     background-color: #242424;
 }
 
 [data-testid="stSidebar"] * {
-    color: #FFFFFF !important;
+    color: white !important;
 }
 
-/* HERO SECTION */
+.main .block-container {
+    max-width: 1150px;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
 
 .hero {
     background: linear-gradient(120deg, #252525, #45403B);
-    padding: 42px;
-    border-radius: 18px;
-    margin-bottom: 28px;
+    padding: 38px;
+    border-radius: 16px;
+    margin-bottom: 25px;
 }
 
 .hero .welcome {
@@ -79,147 +55,96 @@ st.markdown("""
 }
 
 .hero h1 {
-    color: #FFFFFF !important;
-    font-size: 42px;
-    margin: 15px 0;
+    color: white !important;
+    font-size: 40px;
 }
 
 .hero p {
     color: #E5DED5 !important;
-    font-size: 16px;
 }
-
-/* SECTION HEADINGS */
 
 .section-heading {
-    font-size: 27px;
-    font-weight: 700;
     color: #292929 !important;
-    margin: 28px 0 15px;
+    font-size: 25px;
+    font-weight: bold;
+    margin-top: 25px;
+    margin-bottom: 15px;
 }
 
-/* METRIC CARDS */
-
 [data-testid="stMetric"] {
-    background-color: #FFFFFF !important;
+    background: white;
     border: 1px solid #EAE6DF;
-    border-radius: 13px;
-    padding: 18px;
+    border-radius: 12px;
+    padding: 16px;
 }
 
 [data-testid="stMetricLabel"],
-[data-testid="stMetricLabel"] *,
 [data-testid="stMetricValue"],
+[data-testid="stMetricLabel"] *,
 [data-testid="stMetricValue"] * {
     color: #292929 !important;
 }
 
-/* MENU CARDS */
-
 .menu-card {
-    background: #FFFFFF;
+    background: white;
     border: 1px solid #EAE6DF;
-    border-radius: 14px;
-    padding: 22px;
-    min-height: 135px;
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 130px;
     margin-bottom: 15px;
 }
 
 .menu-card h4 {
     color: #292929 !important;
-    font-size: 17px;
-    margin: 8px 0;
 }
 
-.menu-card .category {
-    color: #777777 !important;
-    font-size: 13px;
+.menu-card p {
+    color: #666666 !important;
 }
 
 .menu-card .price {
     color: #B45B36 !important;
-    font-size: 18px;
     font-weight: bold;
+    font-size: 18px;
 }
 
-/* INPUTS */
+[data-testid="stChatMessage"] {
+    background-color: white;
+    border: 1px solid #EAE6DF;
+    border-radius: 12px;
+}
 
-.stSelectbox label,
-.stTextArea label {
+[data-testid="stChatMessage"] p,
+[data-testid="stChatMessage"] li {
     color: #292929 !important;
 }
 
-.stTextArea textarea {
-    background-color: #FFFFFF !important;
+.stChatInput textarea {
     color: #292929 !important;
-    border: 1px solid #D9D3CA !important;
+    background: white !important;
 }
 
-.stTextArea textarea::placeholder {
-    color: #888888 !important;
-}
-
-.stSelectbox div[data-baseweb="select"] {
-    background-color: #FFFFFF;
-}
-
-/* ORDER SUMMARY CONTAINER */
-
-[data-testid="stVerticalBlockBorderWrapper"] {
-    background-color: #FFFFFF !important;
-    border-color: #EAE6DF !important;
-    border-radius: 14px;
-}
-
-/* BILL TEXT - HIGH CONTRAST */
-
-[data-testid="stAppViewContainer"] .main [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdownContainer"] p,
-[data-testid="stAppViewContainer"] .main [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdownContainer"] h1,
-[data-testid="stAppViewContainer"] .main [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdownContainer"] h2,
-[data-testid="stAppViewContainer"] .main [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdownContainer"] h3,
-[data-testid="stAppViewContainer"] .main [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMarkdownContainer"] strong {
-    color: #292929 !important;
-}
-
-/* ORDER ITEM TEXT */
-
-[data-testid="stAppViewContainer"] .main [data-testid="stVerticalBlockBorderWrapper"] p {
-    color: #292929 !important;
-}
-
-/* SUCCESS MESSAGE */
-
-[data-testid="stAlert"] p {
-    color: inherit !important;
-}
-
-/* BUTTONS */
-
-div.stButton > button {
+.stButton button {
     border-radius: 9px;
-    min-height: 44px;
-    font-weight: 600;
+    min-height: 42px;
     border: 1px solid #B45B36;
 }
 
-div.stButton > button[kind="primary"] {
-    background-color: #B45B36;
-    color: #FFFFFF;
+.stButton button[kind="primary"] {
+    background: #B45B36;
+    color: white;
 }
-
-/* FOOTER */
 
 footer {
     visibility: hidden;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
 
-# ==================================================
+# =====================================================
 # GROQ INITIALIZATION
-# ==================================================
+# =====================================================
 
 load_dotenv()
 
@@ -232,16 +157,15 @@ if not api_key:
 client = Groq(api_key=api_key)
 
 
-# ==================================================
-# LOAD RESTAURANT MENU
-# ==================================================
+# =====================================================
+# LOAD MENU
+# =====================================================
 
 menu = {}
 menu_categories = {}
 
 try:
     with open("menu.csv", "r", encoding="utf-8-sig") as file:
-
         reader = csv.DictReader(file)
 
         if not {"item_name", "price"}.issubset(reader.fieldnames or []):
@@ -249,7 +173,6 @@ try:
             st.stop()
 
         for row in reader:
-
             name = row["item_name"].strip()
             price = int(row["price"])
             category = row.get("category", "Other").strip()
@@ -259,7 +182,7 @@ try:
                 menu_categories[name] = category
 
 except (FileNotFoundError, ValueError, KeyError):
-    st.error("Unable to load menu.csv. Check your menu file.")
+    st.error("Unable to load menu.csv. Check the file.")
     st.stop()
 
 if not menu:
@@ -267,9 +190,12 @@ if not menu:
     st.stop()
 
 
-# ==================================================
+# =====================================================
 # SESSION STATE
-# ==================================================
+# =====================================================
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 if "pending_order" not in st.session_state:
     st.session_state.pending_order = None
@@ -278,73 +204,123 @@ if "confirmed" not in st.session_state:
     st.session_state.confirmed = False
 
 
-# ==================================================
-# AI ORDER EXTRACTION
-# ==================================================
+# =====================================================
+# AI CHATBOT
+# =====================================================
 
-def extract_order(user_input):
+def get_ai_response(user_input):
 
     system_prompt = f"""
-You are an intelligent restaurant ordering assistant.
+You are the friendly AI restaurant assistant for The Urban Spoon.
 
-AVAILABLE MENU:
+AVAILABLE MENU AND PRICES:
 {json.dumps(menu, indent=2)}
 
-RULES:
-1. Identify food items and quantities.
-2. Only use exact menu item names.
-3. Put unavailable items in unavailable_items.
-4. Never invent food items.
-5. Assume quantity 1 if not mentioned.
-6. If no order is detected, return empty arrays.
-7. Do not calculate prices.
-8. Return valid JSON only.
+MENU CATEGORIES:
+{json.dumps(menu_categories, indent=2)}
 
-FORMAT:
+You must understand normal customer conversations as well as
+food orders.
+
+YOUR TASKS:
+
+1. GREETINGS:
+If the customer says hello, hi, good morning, etc.,
+respond politely and ask how you can help.
+
+2. MENU QUESTIONS:
+Answer questions about available food items, categories
+and prices using ONLY the provided menu.
+
+3. FOOD ORDERS:
+Identify food items and quantities from the customer's message.
+Only use exact item names from the available menu.
+
+4. UNAVAILABLE ITEMS:
+If the customer requests food that is not in the menu,
+put it in unavailable_items.
+
+5. FOLLOW-UP ORDERS:
+Use recent conversation history to understand messages
+such as "add one burger" or "make it two".
+
+6. GENERAL QUESTIONS:
+Politely answer simple restaurant-related questions.
+Do not invent restaurant details.
+
+7. PRICES:
+Never calculate the bill. Python will calculate it.
+
+8. If the message is not an order, return empty items
+and unavailable_items.
+
+IMPORTANT:
+- Never invent menu items or prices.
+- Never claim an order is confirmed.
+- Do not treat a greeting as a food order.
+- Keep your response friendly and concise.
+- Return valid JSON only.
+
+REQUIRED JSON FORMAT:
+
 {{
+    "reply": "Your conversational response",
     "items": [
         {{
             "item_name": "Margherita Pizza",
             "quantity": 2
         }}
     ],
-    "unavailable_items": ["Chicken Burger"]
+    "unavailable_items": [
+        "Chicken Burger"
+    ]
 }}
 """
 
+    # Include recent conversation for follow-up understanding.
+    conversation = [
+        {"role": "system", "content": system_prompt}
+    ]
+
+    for message in st.session_state.messages[-6:]:
+        if message["role"] in ["user", "assistant"]:
+            conversation.append({
+                "role": message["role"],
+                "content": message["content"]
+            })
+
+    conversation.append({
+        "role": "user",
+        "content": user_input
+    })
+
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}
-        ],
+        messages=conversation,
         response_format={"type": "json_object"},
-        max_completion_tokens=400
+        max_completion_tokens=500
     )
 
     return json.loads(response.choices[0].message.content)
 
 
-# ==================================================
+# =====================================================
 # BILL CALCULATION
-# ==================================================
+# =====================================================
 
-def calculate_bill(order):
+def calculate_bill(items, unavailable):
 
-    if not isinstance(order, dict):
-        raise ValueError("Invalid order response.")
+    if not isinstance(items, list):
+        raise ValueError("Invalid item response.")
 
-    items = order.get("items")
-    unavailable = order.get("unavailable_items", [])
-
-    if not isinstance(items, list) or not isinstance(unavailable, list):
-        raise ValueError("Invalid order format.")
-
-    if not all(isinstance(x, str) for x in unavailable):
+    if not isinstance(unavailable, list):
         raise ValueError("Invalid unavailable item response.")
 
-    total = 0
+    if not all(isinstance(x, str) for x in unavailable):
+        raise ValueError("Invalid unavailable item.")
+
     bill_items = []
+    total = 0
 
     for item in items:
 
@@ -376,15 +352,39 @@ def calculate_bill(order):
             "subtotal": subtotal
         })
 
-    if not bill_items and not unavailable:
-        raise ValueError("No food order detected. Please try again.")
-
-    return bill_items, total, unavailable
+    return bill_items, total
 
 
-# ==================================================
+# =====================================================
+# ORDER SUMMARY
+# =====================================================
+
+def create_order_summary(items, total, unavailable):
+
+    message = "Here is your order summary:\n\n"
+
+    for item in items:
+        message += (
+            f"- {item['item_name']} x {item['quantity']} "
+            f"= Rs. {item['subtotal']}\n"
+        )
+
+    if unavailable:
+        message += (
+            "\nUnavailable items: "
+            + ", ".join(unavailable)
+            + "\n"
+        )
+
+    message += f"\n**Total Amount: Rs. {total}**"
+    message += "\n\nWould you like to confirm your order?"
+
+    return message
+
+
+# =====================================================
 # SIDEBAR
-# ==================================================
+# =====================================================
 
 with st.sidebar:
 
@@ -401,17 +401,17 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### Restaurant")
-    st.markdown("Fresh food. Simple ordering.")
-    st.markdown("AI-powered ordering assistant")
+    st.write("Fresh food. Simple ordering.")
+    st.write("AI-powered ordering assistant")
 
     st.divider()
 
     st.caption("Powered by Python, Streamlit & Groq")
 
 
-# ==================================================
+# =====================================================
 # HERO SECTION
-# ==================================================
+# =====================================================
 
 st.markdown("""
 <div class="hero">
@@ -419,16 +419,15 @@ st.markdown("""
     <h1>The Urban Spoon</h1>
     <p>
         Delicious food, simple ordering.
-        Tell our AI assistant what you would like to eat
-        and get your bill instantly.
+        Chat with our AI assistant and get your bill instantly.
     </p>
 </div>
 """, unsafe_allow_html=True)
 
 
-# ==================================================
-# RESTAURANT STATISTICS
-# ==================================================
+# =====================================================
+# STATISTICS
+# =====================================================
 
 col1, col2, col3 = st.columns(3)
 
@@ -442,21 +441,19 @@ with col3:
     st.metric("Ordering", "AI Powered")
 
 
-# ==================================================
-# MENU SECTION
-# ==================================================
+# =====================================================
+# MENU DISPLAY
+# =====================================================
 
 st.markdown(
     '<div class="section-heading">Explore Our Menu</div>',
     unsafe_allow_html=True
 )
 
-st.write("Explore our dishes and choose what you would like to order.")
-
 categories = ["All"] + sorted(set(menu_categories.values()))
 
 selected_category = st.selectbox(
-    "Filter by category",
+    "Filter menu by category",
     categories
 )
 
@@ -473,82 +470,133 @@ for index, (name, price) in enumerate(filtered_items):
 
     with menu_columns[index % 3]:
 
-        safe_name = html.escape(name)
-        safe_category = html.escape(menu_categories[name])
-
         st.markdown(f"""
         <div class="menu-card">
-            <p class="category">{safe_category}</p>
-            <h4>{safe_name}</h4>
+            <p>{menu_categories[name]}</p>
+            <h4>{name}</h4>
             <p class="price">Rs. {price}</p>
         </div>
         """, unsafe_allow_html=True)
 
 
-# ==================================================
-# AI ORDER ASSISTANT
-# ==================================================
+# =====================================================
+# CHATBOT INTERFACE
+# =====================================================
 
 st.divider()
 
 st.markdown(
-    '<div class="section-heading">AI Order Assistant</div>',
+    '<div class="section-heading">Chat With Our AI Assistant</div>',
     unsafe_allow_html=True
 )
 
 st.write(
-    "Tell us what you would like to order. "
-    "You can mention multiple items in one sentence."
+    "Ask about our menu, food prices or place your order below."
 )
 
-with st.container(border=True):
+if not st.session_state.messages:
 
-    st.markdown("### Place Your Order")
-
-    user_input = st.text_area(
-        "Your order",
-        placeholder="Example: I want 2 Margherita pizzas and 1 Veg Burger.",
-        height=100,
-        key="order_input"
-    )
-
-    if st.button("Generate My Bill", use_container_width=True):
-
-        st.session_state.pending_order = None
-        st.session_state.confirmed = False
-
-        if not user_input.strip():
-
-            st.warning("Please enter your order.")
-
-        else:
-
-            with st.spinner("Understanding your order..."):
-
-                try:
-
-                    order = extract_order(user_input)
-
-                    bill_items, total, unavailable = calculate_bill(order)
-
-                    st.session_state.pending_order = {
-                        "items": bill_items,
-                        "total": total,
-                        "unavailable": unavailable
-                    }
-
-                except (ValueError, TypeError, KeyError) as e:
-
-                    st.error(str(e))
-
-                except Exception as e:
-
-                    st.error(f"Unable to process your order: {e}")
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": (
+            "Welcome to The Urban Spoon! "
+            "How can I help you today? "
+            "You can ask about our menu or place an order."
+        )
+    })
 
 
-# ==================================================
-# ORDER SUMMARY
-# ==================================================
+# Display chat history
+
+for message in st.session_state.messages:
+
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+
+# Customer input
+
+user_input = st.chat_input("Type your message here...")
+
+
+# =====================================================
+# PROCESS CUSTOMER MESSAGE
+# =====================================================
+
+if user_input:
+
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_input
+    })
+
+    with st.spinner("Assistant is thinking..."):
+
+        try:
+
+            result = get_ai_response(user_input)
+
+            if not isinstance(result, dict):
+                raise ValueError("Invalid AI response.")
+
+            items = result.get("items", [])
+            unavailable = result.get("unavailable_items", [])
+            reply = result.get("reply", "How else can I help you?")
+
+            if not isinstance(reply, str):
+                raise ValueError("Invalid assistant response.")
+
+            bill_items, total = calculate_bill(items, unavailable)
+
+            if bill_items:
+
+                st.session_state.pending_order = {
+                    "items": bill_items,
+                    "total": total,
+                    "unavailable": unavailable
+                }
+
+                st.session_state.confirmed = False
+
+                assistant_message = create_order_summary(
+                    bill_items,
+                    total,
+                    unavailable
+                )
+
+            elif unavailable:
+
+                assistant_message = (
+                    reply
+                    + "\n\nUnavailable items: "
+                    + ", ".join(unavailable)
+                )
+
+            else:
+
+                assistant_message = reply
+
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": assistant_message
+            })
+
+        except Exception as e:
+
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": (
+                    "Sorry, I couldn't process that message. "
+                    "Please try again. Error: " + str(e)
+                )
+            })
+
+    st.rerun()
+
+
+# =====================================================
+# ORDER CONFIRMATION
+# =====================================================
 
 pending = st.session_state.pending_order
 
@@ -561,115 +609,101 @@ if pending:
         unsafe_allow_html=True
     )
 
-    if pending["unavailable"]:
+    with st.container(border=True):
 
-        st.warning(
-            "Unavailable items: "
-            + ", ".join(pending["unavailable"])
-        )
+        st.markdown("### Bill Details")
 
-    if pending["items"]:
+        for item in pending["items"]:
 
-        with st.container(border=True):
+            col1, col2, col3 = st.columns([3, 1, 2])
 
-            st.markdown("### Bill Details")
+            col1.write(item["item_name"])
+            col2.write(item["quantity"])
+            col3.write(f"Rs. {item['subtotal']}")
 
-            headers = st.columns(4)
+        if pending["unavailable"]:
+            st.warning(
+                "Unavailable: "
+                + ", ".join(pending["unavailable"])
+            )
 
-            for col, label in zip(
-                headers,
-                ["Item", "Quantity", "Price", "Subtotal"]
+        st.divider()
+
+        st.markdown(f"## Total: Rs. {pending['total']}")
+
+    if not st.session_state.confirmed:
+
+        st.info("Please confirm or cancel your order.")
+
+        confirm_col, cancel_col = st.columns(2)
+
+        with confirm_col:
+
+            if st.button(
+                "Confirm Order",
+                type="primary",
+                use_container_width=True
             ):
-                col.markdown(f"**{label}**")
 
-            for item in pending["items"]:
+                st.session_state.confirmed = True
 
-                cols = st.columns(4)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": (
+                        "Your order has been confirmed! "
+                        "Thank you for ordering with The Urban Spoon."
+                    )
+                })
 
-                cols[0].write(item["item_name"])
-                cols[1].write(item["quantity"])
-                cols[2].write(f'Rs. {item["price"]}')
-                cols[3].write(f'Rs. {item["subtotal"]}')
+                st.rerun()
 
-            st.divider()
+        with cancel_col:
 
-            st.markdown(
-                f"""
-                <h2 style="
-                    text-align:right;
-                    color:#B45B36 !important;
-                ">
-                    Total: Rs. {pending['total']}
-                </h2>
-                """,
-                unsafe_allow_html=True
-            )
-
-        if not st.session_state.confirmed:
-
-            st.info("Please review your bill before confirming.")
-
-            confirm_col, cancel_col = st.columns(2)
-
-            with confirm_col:
-
-                if st.button(
-                    "Confirm Order",
-                    type="primary",
-                    use_container_width=True
-                ):
-
-                    st.session_state.confirmed = True
-                    st.rerun()
-
-            with cancel_col:
-
-                if st.button(
-                    "Cancel Order",
-                    use_container_width=True
-                ):
-
-                    st.session_state.pending_order = None
-                    st.session_state.confirmed = False
-                    st.rerun()
-
-        else:
-
-            st.success("Your order has been confirmed!")
-
-            st.markdown(
-                """
-                <p style="color:#292929 !important;">
-                    Thank you for ordering with The Urban Spoon.
-                </p>
-                """,
-                unsafe_allow_html=True
-            )
-
-            st.metric(
-                "Final Amount",
-                f"Rs. {pending['total']}"
-            )
-
-            if st.button("Place New Order", use_container_width=True):
+            if st.button(
+                "Cancel Order",
+                use_container_width=True
+            ):
 
                 st.session_state.pending_order = None
                 st.session_state.confirmed = False
+
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": (
+                        "Your order has been cancelled. "
+                        "You can place another order whenever you like."
+                    )
+                })
+
                 st.rerun()
 
     else:
 
-        st.info("No available items to bill. Please try another order.")
+        st.success("Your order has been confirmed!")
+
+        st.metric("Final Amount", f"Rs. {pending['total']}")
+
+        if st.button("Place New Order", use_container_width=True):
+
+            st.session_state.pending_order = None
+            st.session_state.confirmed = False
+
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": "What would you like to order next?"
+            })
+
+            st.rerun()
 
 
-# ==================================================
+# =====================================================
 # FOOTER
-# ==================================================
+# =====================================================
 
 st.divider()
 
 st.markdown("""
-<p style="text-align:center;color:#777777 !important;">
-    The Urban Spoon | AI-Powered Restaurant Ordering System
+<p style="text-align:center;color:#777777;">
+The Urban Spoon | AI-Powered Restaurant Ordering System
 </p>
 """, unsafe_allow_html=True)
